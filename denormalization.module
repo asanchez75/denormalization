@@ -1,0 +1,24 @@
+<?php
+
+/**
+ * @file
+ * Contains denormalization.module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function denormalization_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the denormalization module.
+    case 'help.page.denormalization':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('denormalization of content types') . '</p>';
+      return $output;
+
+    default:
+  }
+}

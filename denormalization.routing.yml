@@ -1,0 +1,9 @@
+
+denormalization.default_form:
+  path: '/denormalization/form/default'
+  defaults:
+    _form: '\Drupal\denormalization\Form\DefaultForm'
+    _title: 'DefaultForm'
+  requirements:
+    _access: 'TRUE'
+  

@@ -1,0 +1,5 @@
+name: 'denormalization'
+type: module
+description: 'denormalization of content types'
+core: 8.x
+package: 'Custom'
