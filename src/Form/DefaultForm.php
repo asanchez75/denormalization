@@ -50,7 +50,7 @@ class DefaultForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $connection = \Drupal::database();
+
     // Display result.
    //foreach ($form_state->getValues() as $key => $value) {
    //   drupal_set_message($key . ': ' . $value);
@@ -58,6 +58,13 @@ class DefaultForm extends FormBase {
 
     $content_type = $form_state->getValues()['content_type'];
     $fields = \Drupal::service('entity_field.manager')->getFieldDefinitions('node', $content_type);
+    $connection = \Drupal::database();
+
+    // clean normalized table if there exists
+    if (db_table_exists($content_type)) {
+        $connection->truncate($content_type)->execute();
+    }
+
     $field_names = array_keys($fields);
 
     $schema[$content_type]['description'] = $content_type;
@@ -69,7 +76,7 @@ class DefaultForm extends FormBase {
     }
 
     if (!db_table_exists($content_type)) {
-        db_create_table($content_type, $schema['article']);
+        db_create_table($content_type, $schema[$content_type]);
     }
     else {
       drupal_set_message('The table ' . $content_type . ' already exists.');
