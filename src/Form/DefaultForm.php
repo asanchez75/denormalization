@@ -50,6 +50,7 @@ class DefaultForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    $connection = \Drupal::database();
     // Display result.
    //foreach ($form_state->getValues() as $key => $value) {
    //   drupal_set_message($key . ': ' . $value);
@@ -57,8 +58,48 @@ class DefaultForm extends FormBase {
 
     $content_type = $form_state->getValues()['content_type'];
     $fields = \Drupal::service('entity_field.manager')->getFieldDefinitions('node', $content_type);
-    dpm(array_keys($fields));
+    $field_names = array_keys($fields);
+
+    $schema[$content_type]['description'] = $content_type;
+    foreach ($field_names as $field_name) {
+      $schema[$content_type]['fields'][$field_name] = [
+        'description' => $field_name,
+        'type' => 'text', // @todo another types
+      ];
+    }
+
+    if (!db_table_exists($content_type)) {
+        db_create_table($content_type, $schema['article']);
+    }
+    else {
+      drupal_set_message('The table ' . $content_type . ' already exists.');
+    }
+
+
+    $nids = \Drupal::entityQuery('node')->condition('type', $content_type)->execute();
+    $nodes =  \Drupal\node\Entity\Node::loadMultiple($nids);
+
+    foreach ($nodes as $nid => $node) {
+        foreach ($field_names as $field_name) {
+          //dpm($node->get($field_name)->getValue());
+          $array[$field_name] = $node->get($field_name)->getString();
+        }
+    }
+
+    $result = $connection->insert($content_type)
+      ->fields($array)
+      ->execute();
 
   }
 
 }
+
+
+/*
+$sql = db_select('article', 'a');
+$rows = $sql->fields('a', array('nid', 'type', 'body'))->execute()->fetchAll();
+dpq($sql);
+foreach ($rows as $row) {
+print_r($row);
+}
+*/
