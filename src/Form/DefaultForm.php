@@ -46,6 +46,7 @@ class DefaultForm extends FormBase {
     parent::validateForm($form, $form_state);
   }
 
+
   /**
    * {@inheritdoc}
    */
@@ -55,9 +56,13 @@ class DefaultForm extends FormBase {
    //foreach ($form_state->getValues() as $key => $value) {
    //   drupal_set_message($key . ': ' . $value);
    //}
-
+    $fields = array();
     $content_type = $form_state->getValues()['content_type'];
-    $fields = \Drupal::service('entity_field.manager')->getFieldDefinitions('node', $content_type);
+    $items = \Drupal::service('entity_field.manager')->getFieldDefinitions('node', $content_type);
+    foreach ($items as $key => $value) {
+      $fields[$key] = $value->getType();
+    }
+
     $connection = \Drupal::database();
 
     // clean normalized table if there exists
@@ -83,14 +88,14 @@ class DefaultForm extends FormBase {
     }
 
     // set batch processing to load data into the denormalized table
-    $batch = $this->batch($content_type, $field_names);
+    $batch = $this->batch($content_type, $fields);
     batch_set($batch);
 
   }
 
-  public function batch($content_type, $field_names) {
+  public function batch($content_type, $fields) {
 
-    $query = \Drupal::entityQuery('node')->condition('type', $content_type);
+    $query = \Drupal::entityQuery('node')->condition('type', $content_type)->range(0, 10);
     $num_operations = $query->count()->execute();
     $nids = \Drupal::entityQuery('node')->condition('type', $content_type)->execute();
 
@@ -104,7 +109,7 @@ class DefaultForm extends FormBase {
             $i + 1,
             $nid,
             $content_type,
-            $field_names,
+            $fields,
             t('(Operation @operation)', ['@operation' => $nid]),
           ],
         ];
