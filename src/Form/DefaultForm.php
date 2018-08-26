@@ -82,31 +82,48 @@ class DefaultForm extends FormBase {
       drupal_set_message('The table ' . $content_type . ' already exists.');
     }
 
-
-    $nids = \Drupal::entityQuery('node')->condition('type', $content_type)->execute();
-    $nodes =  \Drupal\node\Entity\Node::loadMultiple($nids);
-
-    foreach ($nodes as $nid => $node) {
-        foreach ($field_names as $field_name) {
-          //dpm($node->get($field_name)->getValue());
-          $array[$field_name] = $node->get($field_name)->getString();
-        }
-    }
-
-    $result = $connection->insert($content_type)
-      ->fields($array)
-      ->execute();
+    // set batch processing to load data into the denormalized table
+    $batch = $this->batch($content_type, $field_names);
+    batch_set($batch);
 
   }
 
-}
+  public function batch($content_type, $field_names) {
 
+    $query = \Drupal::entityQuery('node')->condition('type', $content_type);
+    $num_operations = $query->count()->execute();
 
-/*
-$sql = db_select('article', 'a');
-$rows = $sql->fields('a', array('nid', 'type', 'body'))->execute()->fetchAll();
-dpq($sql);
-foreach ($rows as $row) {
-print_r($row);
+    $nids = \Drupal::entityQuery('node')->condition('type', $content_type)->execute();
+
+    $nodes =  \Drupal\node\Entity\Node::loadMultiple($nids);
+
+    $i = 0;
+
+    foreach ($nodes as $nid => $node) {
+        $i++;
+        foreach ($field_names as $field_name) {
+          //dpm($node->get($field_name)->getValue());
+          $fields[$field_name] = $node->get($field_name)->getString();
+        }
+        $operations[] = [
+          'denormalization_op',
+          [
+            $i + 1,
+            $content_type,
+            $fields,
+            t('(Operation @operation)', ['@operation' => $fields['nid']]),
+          ],
+        ];
+    }
+
+    drupal_set_message(t('Creating an array of @num operations', ['@num' => $num_operations]));
+
+    $batch = [
+      'title' => t('Creating an array of @num operations', ['@num' => $num_operations]),
+      'operations' => $operations,
+      'finished' => 'denormalization_finished',
+    ];
+    return $batch;
+  }
+
 }
-*/
