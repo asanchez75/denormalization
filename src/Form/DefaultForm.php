@@ -92,26 +92,20 @@ class DefaultForm extends FormBase {
 
     $query = \Drupal::entityQuery('node')->condition('type', $content_type);
     $num_operations = $query->count()->execute();
-
     $nids = \Drupal::entityQuery('node')->condition('type', $content_type)->execute();
-
-    $nodes =  \Drupal\node\Entity\Node::loadMultiple($nids);
 
     $i = 0;
 
-    foreach ($nodes as $nid => $node) {
+    foreach ($nids as $nid) {
         $i++;
-        foreach ($field_names as $field_name) {
-          //dpm($node->get($field_name)->getValue());
-          $fields[$field_name] = $node->get($field_name)->getString();
-        }
         $operations[] = [
           'denormalization_op',
           [
             $i + 1,
+            $nid,
             $content_type,
-            $fields,
-            t('(Operation @operation)', ['@operation' => $fields['nid']]),
+            $field_names,
+            t('(Operation @operation)', ['@operation' => $nid]),
           ],
         ];
     }

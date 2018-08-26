@@ -6,13 +6,21 @@
  */
 
 use Drupal\Core\Routing\RouteMatchInterface;
-
+use Drupal\node\Entity\Node;
 /**
  * Batch operation for batch, one at a time.
  *
  * This is the function that is called on each operation in batch
  */
-function denormalization_op($id, $content_type, $fields, $operation_details, &$context) {
+function denormalization_op($id, $nid, $content_type, $field_names, $operation_details, &$context) {
+
+    $node =  Node::load($nid);
+    $fields = array();
+
+    foreach ($field_names as $field_name) {
+      //dpm($node->get($field_name)->getValue());
+      $fields[$field_name] = $node->get($field_name)->getString();
+    }
 
   //usleep(2000000);
     $connection = \Drupal::database();
